@@ -1,0 +1,428 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  ONLINE
+}
+
+enum OrderSource {
+  DINE_IN
+  TAKEAWAY
+  SWIGGY
+  ZOMATO
+}
+
+model Hotel {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  slug                String   @unique
+  tagline             String?
+  description         String?  @db.Text
+  address             String?
+  phone               String?
+  whatsappNumber      String?
+  whatsappMode        String   @default("FREE")
+  whatsappPhoneId     String?
+  whatsappAccessToken String?  @db.Text
+  whatsappBusinessId  String?
+  notificationSound   String?  @default("chime")
+  email               String?
+  logoUrl             String?
+  coverImage          String?
+  currency            String   @default("₹")
+  taxRate             Float    @default(5.0)
+  primaryColor        String   @default("#12372A")
+  accentColor         String   @default("#C9A227")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  tables        HotelTable[]
+  categories    Category[]
+  products      Product[]
+  orders        Order[]
+  bills         Bill[]
+  adminUsers    AdminUser[]
+  sessions      Session[]
+  announcements Announcement[]
+  feedbacks     Feedback[]
+  aggregatorIntegrations AggregatorIntegration[]
+
+  @@index([slug])
+}
+
+model HotelTable {
+  id          Int         @id @default(autoincrement())
+  hotelId     Int
+  tableNumber String
+  qrCodeToken String      @unique
+  capacity    Int         @default(4)
+  floor       String?     @default("Main Dining")
+  status      TableStatus @default(AVAILABLE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  hotel    Hotel     @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  orders   Order[]
+  sessions Session[]
+
+  @@index([hotelId])
+  @@index([qrCodeToken])
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  phone     String   @unique
+  name      String
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders            Order[]
+  sessions          Session[]
+  pushSubscriptions PushSubscription[]
+
+  @@index([phone])
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  hotelId     Int
+  name        String
+  slug        String
+  icon        String?
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hotel    Hotel     @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@index([hotelId])
+  @@index([hotelId, slug])
+}
+
+model Product {
+  id              Int      @id @default(autoincrement())
+  hotelId         Int
+  categoryId      Int
+  name            String
+  slug            String
+  description     String   @db.Text
+  price           Float
+  originalPrice   Float?
+  imageUrl        String   @db.Text
+  isVeg           Boolean  @default(false)
+  isPopular       Boolean  @default(false)
+  isAvailable     Boolean  @default(true)
+  rating          Float    @default(4.8)
+  reviewsCount    Int      @default(0)
+  prepTimeMinutes Int      @default(15)
+  ingredients     String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  hotel      Hotel       @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  category   Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([hotelId])
+  @@index([categoryId])
+  @@index([isPopular])
+}
+
+model Session {
+  id              Int       @id @default(autoincrement())
+  hotelId         Int
+  tableId         Int
+  customerId      Int?
+  sessionCode     String    @unique
+  guestCount      Int       @default(1)
+  isActive        Boolean   @default(true)
+  billRequested   Boolean   @default(false)
+  billRequestedAt DateTime?
+  startedAt       DateTime  @default(now())
+  closedAt        DateTime?
+
+  hotel    Hotel      @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  table    HotelTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  customer Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  orders   Order[]
+
+  @@index([hotelId])
+  @@index([tableId])
+  @@index([isActive])
+}
+
+model Order {
+  id                  Int         @id @default(autoincrement())
+  orderNumber         String      @unique
+  hotelId             Int
+  tableId             Int?
+  customerId          Int?
+  sessionId           Int?
+  customerName        String
+  customerPhone       String
+  guestCount          Int         @default(1)
+  status              OrderStatus @default(PENDING)
+  orderSource         OrderSource @default(DINE_IN)
+  externalOrderId     String?
+  riderName           String?
+  riderPhone          String?
+  riderStatus         String?     // e.g. "ASSIGNED", "ARRIVED", "PICKED_UP", "DELIVERED"
+  otp                 String?
+  subtotal            Float
+  taxRate             Float       @default(5.0)
+  taxAmount           Float
+  discountAmount      Float       @default(0)
+  totalAmount         Float
+  specialInstructions String?     @db.Text
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  hotel         Hotel                @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  table         HotelTable?          @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  customer      Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  session       Session?             @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+  bill          Bill?
+  notifications Notification[]
+  feedbacks     Feedback[]
+
+  @@index([hotelId])
+  @@index([tableId])
+  @@index([customerId])
+  @@index([sessionId])
+  @@index([customerPhone])
+  @@index([orderNumber])
+  @@index([status])
+}
+
+model OrderItem {
+  id                  Int       @id @default(autoincrement())
+  orderId             Int
+  productId           Int?
+  productName         String
+  unitPrice           Float
+  quantity            Int
+  subtotal            Float
+  specialInstructions String?
+  isVeg               Boolean   @default(false)
+  isCancelled         Boolean   @default(false)
+  isServed            Boolean   @default(false)
+  servedAt            DateTime?
+  imageUrl            String?   @db.Text
+  createdAt           DateTime  @default(now())
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([isCancelled])
+  @@index([isServed])
+}
+
+model OrderStatusHistory {
+  id        Int         @id @default(autoincrement())
+  orderId   Int
+  status    OrderStatus
+  note      String?
+  changedAt DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model Bill {
+  id             Int            @id @default(autoincrement())
+  orderId        Int            @unique
+  hotelId        Int
+  billNumber     String         @unique
+  subtotal       Float
+  taxAmount      Float
+  discountAmount Float          @default(0)
+  grandTotal     Float
+  paymentStatus  PaymentStatus  @default(PENDING)
+  paymentMethod  PaymentMethod?
+  pdfUrl         String?
+  generatedAt    DateTime       @default(now())
+  paidAt         DateTime?
+
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  hotel    Hotel     @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([orderId])
+  @@index([hotelId])
+  @@index([billNumber])
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  billId        Int
+  amount        Float
+  paymentMethod PaymentMethod
+  status        PaymentStatus @default(PAID)
+  transactionId String?
+  paidAt        DateTime      @default(now())
+
+  bill Bill @relation(fields: [billId], references: [id], onDelete: Cascade)
+
+  @@index([billId])
+}
+
+model PushSubscription {
+  id         Int      @id @default(autoincrement())
+  customerId Int?
+  hotelId    Int?
+  tableId    Int?
+  endpoint   String   @db.Text
+  p256dh     String   @db.Text
+  auth       String
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([hotelId])
+  @@index([tableId])
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  orderId    Int?
+  customerId Int?
+  title      String
+  body       String
+  icon       String?
+  isRead     Boolean  @default(false)
+  sentAt     DateTime @default(now())
+
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([customerId])
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  KITCHEN
+  STAFF
+  CASHIER
+}
+
+model AdminUser {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String
+  plainPassword String?
+  name          String
+  role          Role     @default(ADMIN)
+  permissions   String?  @db.Text
+  hotelId       Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  hotel Hotel? @relation(fields: [hotelId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([hotelId])
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  hotelId   Int
+  text      String   @db.Text
+  badge     String? // e.g. "OFFER", "TODAY SPECIAL", "NEW", "CHEF'S PICK"
+  icon      String? // e.g. emoji like "🔥", "✨", "🎉"
+  theme     String?  @default("emerald") // "emerald", "gold", "ruby", "dark"
+  linkUrl   String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model Feedback {
+  id            Int      @id @default(autoincrement())
+  hotelId       Int
+  orderId       Int?
+  orderNumber   String?
+  tableNumber   String?
+  customerName  String?
+  customerPhone String?
+  rating        Int      @default(5)
+  tags          String?
+  comment       String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  hotel Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([hotelId])
+  @@index([orderId])
+  @@index([rating])
+}
+
+model AggregatorIntegration {
+  id            Int         @id @default(autoincrement())
+  hotelId       Int
+  platform      OrderSource // SWIGGY or ZOMATO
+  isEnabled     Boolean     @default(false)
+  storeId       String?
+  apiKey        String?
+  webhookSecret String?
+  autoAccept    Boolean     @default(true)
+  prepTime      Int         @default(20)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  hotel         Hotel       @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([hotelId, platform])
+  @@index([hotelId])
+}

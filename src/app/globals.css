@@ -1,0 +1,291 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FAF9F6;
+  --foreground: #171717;
+  --card: #FFFFFF;
+  --primary: #12372A;
+  --primary-light: #1b4d3b;
+  --primary-foreground: #FAF9F6;
+  --secondary: #1F2937;
+  --accent: #C9A227;
+  --accent-light: #dfb738;
+  --accent-foreground: #171717;
+  --muted: #6B7280;
+  --muted-light: #F3F4F6;
+  --border: #E5E7EB;
+  --ring: #12372A;
+  --radius: 1rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-light: var(--muted-light);
+  --color-border: var(--border);
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  overscroll-behavior-y: contain;
+}
+
+/* Custom smooth scrollbar for horizontal categories */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Elegant thin scrollbar for admin dishes lists */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 9999px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB transparent;
+}
+
+/* Mobile safe area spacing */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 1rem);
+}
+
+/* Glassmorphism helpers */
+.glass-header {
+  background: rgba(250, 249, 246, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Print bill styling */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* Continuous Running Marquee Ticker for Homepage Announcements */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marquee 30s linear infinite;
+}
+
+.animate-marquee-slow {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marquee 45s linear infinite;
+}
+
+.animate-marquee:hover,
+.animate-marquee:focus-within,
+.animate-marquee[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+/* Fade-in animation for alerts/errors */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated Rising Steam / Hot Air for Coffee & Food */
+@keyframes steamDrift {
+  0% {
+    transform: translateY(2px) scaleX(0.8);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.85;
+  }
+  60% {
+    transform: translateY(-8px) scaleX(1.15) rotate(5deg);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(-18px) scaleX(1.35) rotate(-5deg);
+    opacity: 0;
+  }
+}
+
+.animate-steam-1 {
+  animation: steamDrift 2.1s infinite ease-out;
+}
+
+.animate-steam-2 {
+  animation: steamDrift 2.1s infinite ease-out 0.65s;
+}
+
+.animate-steam-3 {
+  animation: steamDrift 2.1s infinite ease-out 1.35s;
+}
+
+/* SweetAlert2 Luxury Hotel Theme */
+div:where(.swal2-container) {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  z-index: 10000 !important;
+}
+
+div:where(.swal2-popup).hotel-swal-popup {
+  border-radius: 28px !important;
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  padding: 24px 20px 20px !important;
+  max-width: 360px !important;
+  width: 90% !important;
+  font-family: inherit !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+div:where(.swal2-popup).hotel-swal-popup::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #12372A 0%, #C9A227 50%, #12372A 100%);
+}
+
+div:where(.swal2-icon).swal2-warning {
+  border-color: #C9A227 !important;
+  color: #C9A227 !important;
+  margin: 6px auto 12px auto !important;
+  transform: scale(0.9) !important;
+  box-shadow: 0 0 0 6px rgba(201, 162, 39, 0.12) !important;
+}
+
+div:where(.swal2-icon).swal2-success {
+  border-color: #10B981 !important;
+  color: #10B981 !important;
+  margin: 6px auto 12px auto !important;
+  transform: scale(0.9) !important;
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.12) !important;
+}
+
+.hotel-swal-title {
+  color: #171717 !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+  padding: 2px 0 6px 0 !important;
+  margin: 0 !important;
+}
+
+.hotel-swal-html {
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #4B5563 !important;
+  font-size: 13px !important;
+}
+
+.hotel-swal-actions {
+  width: 100% !important;
+  margin: 16px 0 0 0 !important;
+}
+
+.hotel-swal-btn {
+  background-color: #12372A !important;
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  border-radius: 16px !important;
+  padding: 13px 28px !important;
+  border: 1px solid rgba(201, 162, 39, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer !important;
+  width: 100% !important;
+}
+
+.hotel-swal-btn:hover {
+  background-color: #0e2b21 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+.hotel-swal-btn:active {
+  transform: translateY(1px) scale(0.99) !important;
+}
+
+.hotel-swal-close {
+  color: #9CA3AF !important;
+  font-size: 24px !important;
+  transition: color 0.15s ease !important;
+  top: 12px !important;
+  right: 14px !important;
+}
+
+.hotel-swal-close:hover {
+  color: #171717 !important;
+}
+
+
