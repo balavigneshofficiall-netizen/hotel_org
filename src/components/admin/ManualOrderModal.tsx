@@ -19,11 +19,8 @@ import {
   Phone,
   Grid,
   Receipt,
-  Sparkles,
   ChefHat,
-  Flame,
-  CheckCircle2,
-  Coffee,
+  Sparkles,
 } from "lucide-react";
 
 interface Product {
@@ -69,7 +66,18 @@ interface ManualOrderModalProps {
   initialTableId?: number | null;
 }
 
-// Category palette for colorful tags
+// Single standard food image for all menu dishes (cached once, fast & unified)
+const DEFAULT_FOOD_IMAGE =
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80";
+
+function getProductImage(product: Product): string {
+  if (product.imageUrl && product.imageUrl.trim() !== "") {
+    return product.imageUrl;
+  }
+  return DEFAULT_FOOD_IMAGE;
+}
+
+// Category palette for colorful badges
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   "Starters & Appetizers": { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
   "Biryani & Rice": { bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200" },
@@ -241,7 +249,7 @@ export default function ManualOrderModal({
   const freeTablesCount = tables.filter((t) => t.status === "AVAILABLE" && (!t.activeOrdersCount || t.activeOrdersCount === 0)).length;
   const activeTablesCount = tables.length - freeTablesCount;
 
-  // Select Table Action: checks if occupied to offer Re-order or Split Table
+  // Select Table Action
   const handleSelectTable = (table: TableItem) => {
     if (table.activeOrdersCount && table.activeOrdersCount > 0) {
       setPromptTable(table);
@@ -459,9 +467,9 @@ export default function ManualOrderModal({
 
   return (
     <div className="fixed inset-0 z-[100] bg-gradient-to-br from-[#FAF8F5] via-[#F5F2EB] to-[#ECE7DC] flex flex-col h-screen w-screen overflow-hidden select-none animate-in fade-in duration-200 font-sans">
-      {/* ═══ TOP NAVBAR: SLEEK & VIBRANT ═══ */}
+      {/* ═══ TOP NAVBAR ═══ */}
       <header className="h-14 bg-white/95 backdrop-blur-md border-b border-stone-200/90 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xs z-20">
-        {/* Left: Tight back arrow + Gradient Title */}
+        {/* Left: Tight back arrow + Title */}
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => {
@@ -536,7 +544,7 @@ export default function ManualOrderModal({
       </header>
 
       {/* ═══════════════════════════════════════════════════════════════
-          STEP 1: CHOOSE TABLE SCREEN (Colourful, pretty & lively)
+          STEP 1: CHOOSE TABLE SCREEN
          ═══════════════════════════════════════════════════════════════ */}
       {step === "CHOOSE_TABLE" && (
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center">
@@ -564,7 +572,7 @@ export default function ManualOrderModal({
                 </p>
               </div>
 
-              {/* Takeaway / Parcel Button (Sunset Gradient) */}
+              {/* Takeaway / Parcel Button */}
               <button
                 type="button"
                 onClick={handleSelectTakeaway}
@@ -756,7 +764,7 @@ export default function ManualOrderModal({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          STEP 2: MENU & ORDER PUNCHING SCREEN (Food Images & Colors)
+          STEP 2: MENU & ORDER PUNCHING SCREEN (Food Images & Preset Fallbacks)
          ═══════════════════════════════════════════════════════════════ */}
       {step === "SELECT_MENU" && (
         <div className="flex-1 flex overflow-hidden">
@@ -793,7 +801,7 @@ export default function ManualOrderModal({
                         onClick={() => setGuestCount(Math.max(1, guestCount - 1))}
                         className="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold flex items-center justify-center transition cursor-pointer"
                       >
-                        <Minus className="w-3 h-3" />
+                        <Minus className="w-3.5 h-3.5" />
                       </button>
                       <span className="w-6 text-center text-xs font-black text-stone-900">
                         {guestCount}
@@ -803,7 +811,7 @@ export default function ManualOrderModal({
                         onClick={() => setGuestCount(guestCount + 1)}
                         className="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold flex items-center justify-center transition cursor-pointer"
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   )}
@@ -936,12 +944,12 @@ export default function ManualOrderModal({
               </div>
             </div>
 
-            {/* ─── FOOD DISHES GRID AREA WITH PHOTOS ─── */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            {/* ─── FOOD DISHES GRID: PRETTY FOOD PHOTOS WITH PRESET FALLBACK ─── */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
               {loadingData ? (
                 <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-3">
                   <Loader2 className="w-8 h-8 animate-spin text-[#12372A]" />
-                  <p className="text-xs font-bold text-stone-600">Loading delicious dishes...</p>
+                  <p className="text-xs font-bold text-stone-600">Loading delicious menu...</p>
                 </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-white rounded-3xl border border-dashed border-stone-200 max-w-md mx-auto my-12 shadow-sm">
@@ -952,100 +960,78 @@ export default function ManualOrderModal({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5">
                   {filteredProducts.map((product) => {
                     const cartItem = cart[product.id];
                     const inCartQty = cartItem ? cartItem.quantity : 0;
-                    const catStyle = getCategoryColor(product.category?.name);
+                    const imgSrc = getProductImage(product);
 
                     return (
                       <div
                         key={product.id}
-                        className={`bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-xl hover:-translate-y-0.5 ${
+                        className={`bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-xl hover:-translate-y-0.5 group ${
                           inCartQty > 0
                             ? "border-emerald-600 ring-2 ring-emerald-600/20 shadow-md"
-                            : "border-stone-200/90 hover:border-emerald-300"
+                            : "border-stone-200/90 hover:border-emerald-400"
                         }`}
                       >
-                        {/* Food Image Banner */}
-                        {product.imageUrl ? (
-                          <div className="relative w-full h-32 sm:h-36 overflow-hidden bg-stone-100 group">
-                            <img
-                              src={product.imageUrl}
-                              alt={product.name}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                              loading="lazy"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+                        {/* Food Image Banner (Single unified image, cached once) */}
+                        <div className="relative w-full h-28 sm:h-32 overflow-hidden bg-stone-100">
+                          <img
+                            src={imgSrc}
+                            alt={product.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            loading="lazy"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target.src !== DEFAULT_FOOD_IMAGE) {
+                                target.src = DEFAULT_FOOD_IMAGE;
+                              }
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
 
-                            {/* Floating Veg / Non-Veg badge */}
-                            <div className="absolute top-2.5 left-2.5">
+                          {/* Floating Veg / Non-Veg badge */}
+                          <div className="absolute top-2.5 left-2.5">
+                            <span
+                              className={`w-5 h-5 rounded-md bg-white/95 backdrop-blur-xs border flex items-center justify-center shadow-xs ${
+                                product.isVeg ? "border-emerald-600" : "border-rose-600"
+                              }`}
+                              title={product.isVeg ? "Vegetarian" : "Non-Vegetarian"}
+                            >
                               <span
-                                className={`w-5 h-5 rounded-md bg-white/95 backdrop-blur-xs border flex items-center justify-center shadow-xs ${
-                                  product.isVeg ? "border-emerald-600" : "border-rose-600"
+                                className={`w-2.5 h-2.5 rounded-full ${
+                                  product.isVeg ? "bg-emerald-600" : "bg-rose-600"
                                 }`}
-                                title={product.isVeg ? "Vegetarian" : "Non-Vegetarian"}
-                              >
-                                <span
-                                  className={`w-2.5 h-2.5 rounded-full ${
-                                    product.isVeg ? "bg-emerald-600" : "bg-rose-600"
-                                  }`}
-                                />
-                              </span>
-                            </div>
-
-                            {/* Floating Category Tag */}
-                            <div className="absolute top-2.5 right-2.5">
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/90 backdrop-blur-xs text-stone-800 shadow-xs truncate max-w-[120px] inline-block">
-                                {product.category?.name}
-                              </span>
-                            </div>
-
-                            {/* Dish Price on image */}
-                            <div className="absolute bottom-2 left-2.5">
-                              <span className="text-base font-black text-white drop-shadow-md">
-                                {currency}{product.price}
-                              </span>
-                            </div>
+                              />
+                            </span>
                           </div>
-                        ) : (
-                          /* Fallback if no image */
-                          <div className="p-3 pb-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <span
-                                className={`w-4 h-4 rounded-xs border flex items-center justify-center shrink-0 mt-0.5 ${
-                                  product.isVeg ? "border-emerald-600 bg-emerald-50" : "border-rose-600 bg-rose-50"
-                                }`}
-                              >
-                                <span
-                                  className={`w-2 h-2 rounded-full ${
-                                    product.isVeg ? "bg-emerald-600" : "bg-rose-600"
-                                  }`}
-                                />
-                              </span>
-                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`}>
-                                {product.category?.name}
-                              </span>
-                            </div>
-                          </div>
-                        )}
 
-                        {/* Dish Details & Bottom CTA */}
-                        <div className="p-3.5 flex flex-col justify-between flex-1">
+                          {/* Floating Category Tag */}
+                          <div className="absolute top-2.5 right-2.5">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/95 backdrop-blur-xs text-stone-800 shadow-xs truncate max-w-[120px] inline-block border border-stone-200/50">
+                              {product.category?.name}
+                            </span>
+                          </div>
+
+                          {/* Dish Price on image */}
+                          <div className="absolute bottom-2 left-2.5">
+                            <span className="text-base font-black text-white drop-shadow-md">
+                              {currency}{product.price}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Dish Details & Add Action */}
+                        <div className="p-3 flex flex-col justify-between flex-1">
                           <h3 className="text-xs sm:text-sm font-black text-stone-900 leading-snug line-clamp-2">
                             {product.name}
                           </h3>
 
-                          {/* Bottom Row */}
-                          <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-stone-100">
-                            {!product.imageUrl && (
-                              <span className="text-base font-black text-stone-900">
-                                {currency}{product.price}
-                              </span>
-                            )}
-
+                          {/* Bottom Add Action Row */}
+                          <div className="flex items-center justify-end mt-3 pt-2.5 border-t border-stone-100">
                             {inCartQty > 0 ? (
-                              <div className="flex items-center gap-1.5 bg-gradient-to-r from-[#12372A] to-emerald-800 text-white rounded-xl px-2.5 py-1 shadow-xs ml-auto">
+                              <div className="flex items-center gap-1.5 bg-gradient-to-r from-[#12372A] to-emerald-800 text-white rounded-xl px-2.5 py-1 shadow-xs">
                                 <button
                                   type="button"
                                   onClick={() => decrementInCart(product.id)}
@@ -1070,7 +1056,7 @@ export default function ManualOrderModal({
                               <button
                                 type="button"
                                 onClick={() => addToCart(product)}
-                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer ml-auto"
+                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer"
                               >
                                 <Plus className="w-3.5 h-3.5" />
                                 <span>Add</span>
@@ -1148,26 +1134,18 @@ export default function ManualOrderModal({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-2.5">
-                          {/* Dish thumbnail if available */}
-                          {product.imageUrl ? (
-                            <img
-                              src={product.imageUrl}
-                              alt={product.name}
-                              className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs border border-stone-200"
-                            />
-                          ) : (
-                            <span
-                              className={`w-3.5 h-3.5 rounded-xs border flex items-center justify-center shrink-0 mt-0.5 ${
-                                product.isVeg ? "border-emerald-600 bg-emerald-50" : "border-rose-600 bg-rose-50"
-                              }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  product.isVeg ? "bg-emerald-600" : "bg-rose-600"
-                                }`}
-                              />
-                            </span>
-                          )}
+                          {/* Dish Thumbnail Image */}
+                          <img
+                            src={getProductImage(product)}
+                            alt={product.name}
+                            className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs border border-stone-200"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target.src !== DEFAULT_FOOD_IMAGE) {
+                                target.src = DEFAULT_FOOD_IMAGE;
+                              }
+                            }}
+                          />
 
                           <div>
                             <h4 className="text-xs font-black text-stone-900 leading-snug">
@@ -1308,7 +1286,7 @@ export default function ManualOrderModal({
                 />
               </div>
 
-              {/* Bill Summary Box (Crisp & Pretty) */}
+              {/* Bill Summary Box */}
               <div className="bg-gradient-to-br from-stone-50 to-[#FAF8F5] p-3.5 rounded-2xl border border-stone-200/90 shadow-2xs space-y-2">
                 <div className="flex items-center justify-between text-xs text-stone-600 font-medium">
                   <span>Subtotal ({totalItemCount} items)</span>
